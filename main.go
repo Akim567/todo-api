@@ -32,6 +32,20 @@ func main() {
 			http.Error(w, "Метод не разрешен", http.StatusMethodNotAllowed)
 			return
 		}
+
+		var newTodo Todo
+		err := json.NewDecoder(r.Body).Decode(&newTodo)
+		if err != nil {
+			http.Error(w, "Ошибка при работее JSON", http.StatusBadRequest)
+			return
+		}
+
+		todos = append(todos, newTodo)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(newTodo)
+
 	})
 
 	fmt.Println("Сервер запущен на http://localhost:8080")
