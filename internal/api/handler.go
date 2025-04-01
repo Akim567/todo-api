@@ -38,18 +38,23 @@ func (h *Handler) addTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var newTodo task.Todo
-	err := json.NewDecoder(r.Body).Decode(&newTodo)
-	if err != nil {
-		http.Error(w, "Ошибка при парсинге JSON", http.StatusBadRequest)
+	// Парсим JSON с полем title
+	var input struct {
+		Title string `json:"title"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil || strings.TrimSpace(input.Title) == "" {
+		http.Error(w, "Некорректный JSON или пустое название задачи", http.StatusBadRequest)
 		return
 	}
 
-	todo := h.Service.Add(newTodo.Title)
+	// Добавляем задачу через сервис
+	newTodo := h.Service.Add(input.Title)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(todo)
+	json.NewEncoder(w).Encode(newTodo)
 }
 
 func (h *Handler) getTodosTable(w http.ResponseWriter, r *http.Request) {

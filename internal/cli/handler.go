@@ -26,6 +26,8 @@ func (h *CLIHandler) HandleCommand() {
 	switch args[1] {
 	case "list":
 		h.listTodos()
+	case "add":
+		h.addTodo(args)
 	default:
 		fmt.Println("Неизвестная команда:", args[1])
 	}
@@ -59,4 +61,17 @@ func (h *CLIHandler) listTodos() {
 
 		fmt.Printf("| %-4d | %-20s | %-10s | %-20s |\n", todo.ID, todo.Title, status, completedAt)
 	}
+}
+
+func (h *CLIHandler) addTodo(args []string) {
+	if len(args) < 3 {
+		fmt.Println("Введите название задачи: taskit add \"Купить молоко\"")
+		return
+	}
+
+	title := strings.Join(args[2:], " ")
+	todo := h.service.Add(title)
+	fmt.Printf("Задача добавлена: [%d] %s\n", todo.ID, todo.Title)
+
+	h.listTodos() //
 }
