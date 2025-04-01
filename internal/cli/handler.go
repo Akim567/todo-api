@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"todo-pet/internal/app/task"
 )
@@ -37,12 +38,25 @@ func (h *CLIHandler) listTodos() {
 		return
 	}
 
-	fmt.Println("Список задач:")
-	for i, todo := range todos {
-		status := "[ ]"
-		if todo.Completed {
-			status = "[x]"
+	fmt.Printf("| %-4s | %-20s | %-10s | %-20s |\n", "ID", "Title", "Status", "Completed At")
+	fmt.Println(strings.Repeat("-", 65))
+
+	for _, todo := range todos {
+		var status string
+		switch todo.Status {
+		case "completed":
+			status = "completed"
+		case "cancelled":
+			status = "cancelled"
+		default:
+			status = "active"
 		}
-		fmt.Printf("%d. %s %s\n", i+1, status, todo.Title)
+
+		completedAt := "-"
+		if todo.CompletedAt != nil && !todo.CompletedAt.IsZero() {
+			completedAt = todo.CompletedAt.Format("02.01.2006 15:04")
+		}
+
+		fmt.Printf("| %-4d | %-20s | %-10s | %-20s |\n", todo.ID, todo.Title, status, completedAt)
 	}
 }

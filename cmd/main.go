@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"todo-pet/internal/api"
 	"todo-pet/internal/app/task"
@@ -12,10 +13,12 @@ import (
 
 func main() {
 
+	now := time.Now()
+
 	var todos = []task.Todo{
-		{Title: "Купить молоко", Completed: false},
-		{Title: "Позвонить другу", Completed: true},
-		{Title: "Выгулять собаку", Completed: false},
+		{ID: 1, Title: "Купить молоко", Status: "active"},
+		{ID: 2, Title: "Позвонить другу", Status: "completed", CompletedAt: &now},
+		{ID: 3, Title: "Выгулять собаку", Status: "cancelled"},
 	}
 
 	service := task.NewService(todos)
