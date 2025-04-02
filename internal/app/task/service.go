@@ -40,3 +40,13 @@ func (s *Service) DeleteById(id int) bool {
 	}
 	return false
 }
+
+func (s *Service) Done(id int) bool {
+	for _, todo := range s.todos {
+		if todo.ID == id {
+			todo.Status = "completed"
+			return true
+		}
+	}
+	return false
+}

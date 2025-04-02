@@ -33,6 +33,7 @@ func (h *CLIHandler) HandleCommand() {
 		if err := listCmd.Execute(); err != nil {
 			fmt.Println("Ошибка при выводе списка:", err)
 		}
+
 	case "add":
 		if len(args) < 3 {
 			fmt.Println("Введите название задачи: go run ./cmd add \"Task\"")
@@ -52,6 +53,7 @@ func (h *CLIHandler) HandleCommand() {
 		if err := listCmd.Execute(); err != nil {
 			fmt.Println("Ошибка при выводе списка:", err)
 		}
+
 	case "delete":
 		if len(args) < 3 {
 			fmt.Println("Укажите ID задачи для удаления: go run ./cmd delete 2")
@@ -67,6 +69,28 @@ func (h *CLIHandler) HandleCommand() {
 			fmt.Println("Ошибка при удалении:", err)
 			return
 		}
+		// Можно вывести обновлённый список
+		listCmd := &command.ListCommand{Service: h.service}
+		_ = listCmd.Execute()
+
+	case "done":
+		if len(args) < 3 {
+			fmt.Println("Укажите ID задачи для изменения статуса: go run ./cmd delete 2")
+			return
+		}
+
+		id, err := strconv.Atoi(args[2])
+		if err != nil {
+			fmt.Println("ID должен быть числом")
+			return
+		}
+
+		delCmd := &command.DoneCommand{Service: h.service, ID: id}
+		if err := delCmd.Execute(); err != nil {
+			fmt.Println("Ошибка при изменении статуса:", err)
+			return
+		}
+
 		// Можно вывести обновлённый список
 		listCmd := &command.ListCommand{Service: h.service}
 		_ = listCmd.Execute()
