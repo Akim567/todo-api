@@ -30,3 +30,13 @@ func (s *Service) Add(title string) Todo {
 	s.nextID++
 	return todo
 }
+
+func (s *Service) DeleteById(id int) bool {
+	for i, todo := range s.todos {
+		if todo.ID == id {
+			s.todos = append(s.todos[:i], s.todos[i+1:]...)
+			return true
+		}
+	}
+	return false
+}

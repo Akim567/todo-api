@@ -3,7 +3,9 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+
 	"todo-pet/internal/app/command"
 	"todo-pet/internal/app/task"
 	"todo-pet/internal/storage"
@@ -18,14 +20,10 @@ func NewHandler(service *task.Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes() {
-	http.HandleFunc("/ping", h.ping)
 	http.HandleFunc("/todos", h.getTodos)
 	http.HandleFunc("/add", h.addTodo)
 	http.HandleFunc("/todos/table", h.getTodosTable)
-}
-
-func (h *Handler) ping(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("pong"))
+	http.HandleFunc("/delete", h.todosHandler)
 }
 
 func (h *Handler) getTodos(w http.ResponseWriter, r *http.Request) {
@@ -100,4 +98,53 @@ func (h *Handler) getTodosTable(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(builder.String()))
+}
+
+func (h *Handler) todosHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodDelete:
+		h.handleDelete(w, r)
+	default:
+		http.Error(w, "Метод не разрешен", http.StatusMethodNotAllowed)
+	}
+}
+
+func (h *Handler) handleDelete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Метод не разрешен", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Получаем ID из query-параметра, например: /delete?id=2
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		http.Error(w, "ID не указан", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID должен быть числом", http.StatusBadRequest)
+		return
+	}
+
+	// Используем паттерн Command
+	cmd := &command.DeleteCommand{
+		Service: h.Service,
+		ID:      id,
+	}
+
+	if err := cmd.Execute(); err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка: %s", err.Error()), http.StatusNotFound)
+		return
+	}
+
+	// После успешного удаления выводим обновлённый список
+	todos := h.Service.GetAll()
+
+	w.Header().Set("Content-Type", "application/json")
+	serializer := storage.NewJSONSerializer()
+	if err := serializer.Serialize(todos, w); err != nil {
+		http.Error(w, "Ошибка при сериализации списка", http.StatusInternalServerError)
+	}
 }
