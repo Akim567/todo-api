@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"todo-pet/internal/app/command"
 	"todo-pet/internal/app/task"
 )
 
@@ -23,55 +24,24 @@ func (h *CLIHandler) HandleCommand() {
 		return
 	}
 
+	var cmd command.Command
+
 	switch args[1] {
 	case "list":
-		h.listTodos()
+		cmd = &command.ListCommand{Service: h.service}
 	case "add":
-		h.addTodo(args)
+		if len(args) < 3 {
+			fmt.Println("Введите название задачи: go run ./cmd add \"Task\"")
+			return
+		}
+		title := strings.Join(args[2:], " ")
+		cmd = &command.AddCommand{Service: h.service, Title: title}
 	default:
-		fmt.Println("Неизвестная команда:", args[1])
-	}
-}
-
-func (h *CLIHandler) listTodos() {
-	todos := h.service.GetAll()
-	if len(todos) == 0 {
-		fmt.Println("Нет заметок")
+		fmt.Println("Неизвестная команды:", args[1])
 		return
 	}
 
-	fmt.Printf("| %-4s | %-20s | %-10s | %-20s |\n", "ID", "Title", "Status", "Completed At")
-	fmt.Println(strings.Repeat("-", 65))
-
-	for _, todo := range todos {
-		var status string
-		switch todo.Status {
-		case "completed":
-			status = "completed"
-		case "cancelled":
-			status = "cancelled"
-		default:
-			status = "active"
-		}
-
-		completedAt := "-"
-		if todo.CompletedAt != nil && !todo.CompletedAt.IsZero() {
-			completedAt = todo.CompletedAt.Format("02.01.2006 15:04")
-		}
-
-		fmt.Printf("| %-4d | %-20s | %-10s | %-20s |\n", todo.ID, todo.Title, status, completedAt)
+	if err := cmd.Execute(); err != nil {
+		fmt.Println("Ошибка при выполнении команды", err)
 	}
-}
-
-func (h *CLIHandler) addTodo(args []string) {
-	if len(args) < 3 {
-		fmt.Println("Введите название задачи: taskit add \"Купить молоко\"")
-		return
-	}
-
-	title := strings.Join(args[2:], " ")
-	todo := h.service.Add(title)
-	fmt.Printf("Задача добавлена: [%d] %s\n", todo.ID, todo.Title)
-
-	h.listTodos() //
 }
