@@ -25,8 +25,6 @@ func (h *CLIHandler) HandleCommand() {
 		return
 	}
 
-	//var cmd command.Command
-
 	switch args[1] {
 	case "list":
 		listCmd := &command.ListCommand{Service: h.service}
@@ -85,8 +83,8 @@ func (h *CLIHandler) HandleCommand() {
 			return
 		}
 
-		delCmd := &command.DoneCommand{Service: h.service, ID: id}
-		if err := delCmd.Execute(); err != nil {
+		doneCmd := &command.DoneCommand{Service: h.service, ID: id}
+		if err := doneCmd.Execute(); err != nil {
 			fmt.Println("Ошибка при изменении статуса:", err)
 			return
 		}
@@ -95,12 +93,11 @@ func (h *CLIHandler) HandleCommand() {
 		listCmd := &command.ListCommand{Service: h.service}
 		_ = listCmd.Execute()
 
+	case "help":
+		helpCmd := &command.HelpCommand{}
+		_ = helpCmd.Execute()
 	default:
 		fmt.Println("Неизвестная команды:", args[1])
 		return
 	}
-
-	// if err := cmd.Execute(); err != nil {
-	// 	fmt.Println("Ошибка при выполнении команды", err)
-	// }
 }

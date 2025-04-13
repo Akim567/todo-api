@@ -1,5 +1,7 @@
 package task
 
+import "time"
+
 type Service struct {
 	todos  []Todo
 	nextID int
@@ -42,9 +44,13 @@ func (s *Service) DeleteById(id int) bool {
 }
 
 func (s *Service) Done(id int) bool {
-	for _, todo := range s.todos {
-		if todo.ID == id {
-			todo.Status = "completed"
+	for i := range s.todos {
+		if s.todos[i].ID == id {
+			s.todos[i].Status = "completed"
+
+			now := time.Now()
+			s.todos[i].CompletedAt = &now
+
 			return true
 		}
 	}
