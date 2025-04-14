@@ -9,19 +9,18 @@ import (
 	"todo-pet/internal/api"
 	"todo-pet/internal/app/task"
 	"todo-pet/internal/cli"
+	"todo-pet/internal/database"
+
+	"gorm.io/gorm"
 )
 
 func main() {
 
-	now := time.Now()
+	db := database.Connect()
 
-	var todos = []task.Todo{
-		{ID: 1, Title: "Купить молоко", Status: "active"},
-		{ID: 2, Title: "Позвонить другу", Status: "completed", CompletedAt: &now},
-		{ID: 3, Title: "Выгулять собаку", Status: "cancelled"},
-	}
+	seedDatabaseIfEmpty(db)
 
-	service := task.NewService(todos)
+	service := task.NewService(db)
 
 	// Если передана CLI-команда — выполняем CLI и выходим
 	if len(os.Args) > 1 {
@@ -36,4 +35,26 @@ func main() {
 
 	fmt.Println("Сервер запущен на http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
+}
+
+func seedDatabaseIfEmpty(db *gorm.DB) {
+	var count int64
+	db.Model(&task.Todo{}).Count(&count)
+	if count > 0 {
+		return // Уже есть задачи — выходим
+	}
+
+	now := time.Now()
+	initialTodos := []task.Todo{
+		{Title: "Купить молоко", Status: "active"},
+		{Title: "Позвонить другу", Status: "completed", CompletedAt: &now},
+		{Title: "Выгулять собаку", Status: "cancelled"},
+	}
+
+	result := db.Create(&initialTodos)
+	if result.Error != nil {
+		fmt.Println("Ошибка при инициализации базы:", result.Error)
+	} else {
+		fmt.Println("Задачи по умолчанию добавлены в базу данных.")
+	}
 }

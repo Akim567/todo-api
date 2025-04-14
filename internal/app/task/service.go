@@ -1,58 +1,52 @@
 package task
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Service struct {
-	todos  []Todo
-	nextID int
+	DB *gorm.DB
 }
 
-func NewService(initialTodos []Todo) *Service {
-	// Присваиваем ID задачам, если они есть
-	for i := range initialTodos {
-		initialTodos[i].ID = i + 1
-	}
+func NewService(db *gorm.DB) *Service {
 	return &Service{
-		todos:  initialTodos,
-		nextID: len(initialTodos) + 1,
+		DB: db,
 	}
 }
 
 func (s *Service) GetAll() []Todo {
-	return s.todos
+	var todos []Todo
+	s.DB.Find(&todos)
+	return todos
 }
 
 func (s *Service) Add(title string) Todo {
 	todo := Todo{
-		ID:     s.nextID,
 		Title:  title,
 		Status: "active",
 	}
-	s.todos = append(s.todos, todo)
-	s.nextID++
+	s.DB.Create(&todo)
 	return todo
 }
 
 func (s *Service) DeleteById(id int) bool {
-	for i, todo := range s.todos {
-		if todo.ID == id {
-			s.todos = append(s.todos[:i], s.todos[i+1:]...)
-			return true
-		}
-	}
-	return false
+	result := s.DB.Delete(&Todo{}, id)
+	return result.RowsAffected > 0
 }
 
 func (s *Service) Done(id int) bool {
-	for i := range s.todos {
-		if s.todos[i].ID == id {
-			s.todos[i].Status = "completed"
-
-			now := time.Now()
-			s.todos[i].CompletedAt = &now
-
-			return true
-		}
+	var todo Todo
+	result := s.DB.First(&todo, id)
+	if result.Error != nil {
+		return false
 	}
-	return false
+
+	todo.Status = "completed"
+	now := time.Now()
+	todo.CompletedAt = &now
+
+	s.DB.Save(&todo)
+	return true
 }
